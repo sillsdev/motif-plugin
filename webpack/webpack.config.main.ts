@@ -67,6 +67,8 @@ const configMain: webpack.Configuration = merge(configBase, {
         { from: 'contributions', to: './contributions/', noErrorOnMissing: true },
         // Copy this extension's type declaration file into the output folder under src/types
         { from: 'src/types', to: './src/types', noErrorOnMissing: true },
+        // The Motif engine (PanGloss), once copied into motif/<rid>/
+        { from: 'motif', to: './motif/', noErrorOnMissing: true },
         // We need to distribute the package.json for Platform.Bible to read the extension properly
         { from: 'package.json', to: './', noErrorOnMissing: true },
         // We need to distribute the manifest.json to inform Platform.Bible about the extension
