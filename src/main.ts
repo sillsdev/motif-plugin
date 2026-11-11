@@ -79,6 +79,8 @@ export async function activate(context: ExecutionActivationContext) {
           grammarPath,
           words,
           processes: options?.processes ?? Number(envValue('MOTIF_SPIKE_PROCESSES') ?? 4),
+          greenBelowMs: options?.greenBelowMs,
+          redAboveMs: options?.redAboveMs,
         });
         logger.info(
           `Motif spike: ${words.length} words, ${JSON.stringify(run.counts)}, wall ${run.wallTotalMs} ms, cold start ${run.coldStartMs} ms, ${run.processes} processes`,

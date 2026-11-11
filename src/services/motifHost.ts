@@ -44,11 +44,16 @@ export const GREEN_BELOW_MS = 500;
 export const RED_ABOVE_MS = 5000;
 
 /** Green under 500 ms, yellow up to 5 s, red beyond that or when the engine gave up or failed. */
-export function classify(status: string, wallMs: number): WordColour {
+export function classify(
+  status: string,
+  wallMs: number,
+  greenBelowMs: number = GREEN_BELOW_MS,
+  redAboveMs: number = RED_ABOVE_MS,
+): WordColour {
   if (status === 'SKIPPED') return 'skipped';
   if (status === 'TIMEOUT' || status === 'CAP' || status === 'ERROR') return 'red';
-  if (wallMs > RED_ABOVE_MS) return 'red';
-  if (wallMs >= GREEN_BELOW_MS) return 'yellow';
+  if (wallMs > redAboveMs) return 'red';
+  if (wallMs >= greenBelowMs) return 'yellow';
   return 'green';
 }
 
@@ -56,7 +61,7 @@ export function classify(status: string, wallMs: number): WordColour {
 export function extractWords(usfm: string): string[] {
   const text = usfm
     .replace(/\\(f|fe|x|ef|ex)\s[\s\S]*?\\\1\*/g, ' ')
-    .replace(/^\\(id|h|toc\d|ide|rem|c|cl|cp|ca)\b.*$/gm, ' ')
+    .replace(/^\\(id|h|toc\d|ide|rem|mt\d?|imt\d?|c|cl|cp|ca)\b.*$/gm, ' ')
     .replace(/\\(v|vp)\s+\S+/g, ' ')
     .replace(/\|[^\\]*/g, ' ')
     .replace(/\\\+?[a-z]+\d*\*?/gi, ' ');
@@ -94,7 +99,14 @@ export class ServeClient {
 
   private nextId = 1;
 
-  constructor(launch: Launcher, command: string, grammarPath: string, wordTimeoutMs: number) {
+  constructor(
+    launch: Launcher,
+    command: string,
+    grammarPath: string,
+    wordTimeoutMs: number,
+    private readonly greenBelowMs: number = GREEN_BELOW_MS,
+    private readonly redAboveMs: number = RED_ABOVE_MS,
+  ) {
     this.process = launch(command, [
       'serve',
       '--project',
@@ -171,7 +183,7 @@ export class ServeClient {
       wallMs,
       parseMs: timing?.parseMs,
       workSteps: typeof message.workSteps === 'number' ? message.workSteps : undefined,
-      colour: classify(status, wallMs),
+      colour: classify(status, wallMs, this.greenBelowMs, this.redAboveMs),
     };
     waiting.resolve(row);
   }
@@ -212,17 +224,28 @@ export interface RunOptions {
   words: readonly string[];
   processes?: number;
   wordTimeoutMs?: number;
+  /** Demo thresholds for exercising the colours with a grammar that is never slow. */
+  greenBelowMs?: number;
+  redAboveMs?: number;
 }
 
 /** Parses every word with `processes` parallel engine processes and times each one. */
 export async function runWords(options: RunOptions): Promise<ChapterRun> {
   const { launch, command, grammarPath, words } = options;
-  const wordTimeoutMs = options.wordTimeoutMs ?? RED_ABOVE_MS;
+  const wordTimeoutMs = options.wordTimeoutMs ?? options.redAboveMs ?? RED_ABOVE_MS;
   const count = Math.max(1, Math.min(options.processes ?? 4, words.length || 1));
   const startedAt = Date.now();
   const clients = Array.from(
     { length: count },
-    () => new ServeClient(launch, command, grammarPath, wordTimeoutMs),
+    () =>
+      new ServeClient(
+        launch,
+        command,
+        grammarPath,
+        wordTimeoutMs,
+        options.greenBelowMs,
+        options.redAboveMs,
+      ),
   );
   clients.forEach((c) => active.add(c));
   try {

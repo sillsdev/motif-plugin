@@ -27,6 +27,9 @@ declare module 'motif-spike' {
     words?: string[];
     processes?: number;
     grammarPath?: string;
+    /** Demo thresholds (ms) for exercising colours with a grammar that is never slow. */
+    greenBelowMs?: number;
+    redAboveMs?: number;
   }
 }
 

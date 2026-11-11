@@ -45,7 +45,7 @@ test('classify uses 500 ms and 5 s edges and treats failures as red', () => {
 });
 
 test('extractWords drops markers, verse numbers and notes and keeps first-seen unique words', () => {
-  const usfm = '\\id GEN\n\\c 1\n\\p\n\\v 1 In the beginning, \\w God|strong="H1"\\w* made it.\\f + \\ft note text\\f* The beginning.\n';
+  const usfm = '\\id GEN\n\\mt1 Book Title\n\\c 1\n\\p\n\\v 1 In the beginning, \\w God|strong="H1"\\w* made it.\\f + \\ft note text\\f* The beginning.\n';
   assert.deepEqual(extractWords(usfm), ['in', 'the', 'beginning', 'god', 'made', 'it']);
 });
 
