@@ -15,7 +15,7 @@ const provider: IWebViewProvider = {
 export async function activate(context: ExecutionActivationContext) {
   logger.info('Motif spike activating');
   context.registrations.add(await papi.webViewProviders.registerWebViewProvider(webViewType, provider));
-  await papi.webViews.openWebView(webViewType, undefined, { existingId: '?' });
+  papi.webViews.openWebView(webViewType, undefined, { existingId: '?' }).catch((e) => logger.warn(`open failed ${e}`));
 }
 
 export async function deactivate() {
