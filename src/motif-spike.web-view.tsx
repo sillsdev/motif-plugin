@@ -22,21 +22,35 @@ globalThis.webViewComponent = function MotifSpikeWebView({
   const [scrRef] = useWebViewScrollGroupScrRef();
   const [projects, setProjects] = useState<ProjectChoice[]>([]);
   const [projectId, setProjectId] = useState<string | undefined>(openedProjectId);
+  const [grammarPath, setGrammarPath] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [result, setResult] = useState<MotifSpikeChapterResult | undefined>();
 
   useEffect(() => {
-    papi.projectLookup
-      .getMetadataForAllProjects()
-      .then((all) => {
+    let cancelled = false;
+    const load = async (attempt: number) => {
+      try {
+        const all = await papi.projectLookup.getMetadataForAllProjects();
         const usable = all
           .filter((p) => p.projectInterfaces.includes('platformScripture.USFM_Chapter'))
           .map((p) => ({ id: p.id, name: p.id }));
+        if (cancelled) return;
+        if (usable.length === 0 && attempt < 60) {
+          // Projects load after the window opens, so ask again for a minute.
+          setTimeout(() => load(attempt + 1), 1000);
+          return;
+        }
         setProjects(usable);
         setProjectId((current) => current ?? usable[0]?.id);
-      })
-      .catch((e) => setError(String(e)));
+      } catch (e) {
+        if (!cancelled) setError(String(e));
+      }
+    };
+    load(0);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const check = async () => {
@@ -44,7 +58,10 @@ globalThis.webViewComponent = function MotifSpikeWebView({
     setBusy(true);
     setError(undefined);
     try {
-      setResult(await papi.commands.sendCommand('motifSpike.checkChapter', projectId, scrRef));
+      setResult(await papi.commands.sendCommand('motifSpike.checkChapter', projectId, scrRef, {
+          grammarPath: grammarPath.trim() || undefined,
+        }),
+      );
     } catch (e) {
       setError(String(e));
     }
@@ -77,6 +94,18 @@ globalThis.webViewComponent = function MotifSpikeWebView({
           {busy ? 'Checking...' : 'Check chapter'}
         </button>
       </div>
+      <div className="tw:flex tw:items-center tw:gap-2 tw:mb-3">
+        <label htmlFor="motif-grammar">Grammar (.fwdata path)</label>
+        <input
+          id="motif-grammar"
+          data-testid="grammar-path"
+          type="text"
+          value={grammarPath}
+          onChange={(e) => setGrammarPath(e.target.value)}
+          placeholder="blank = MOTIF_SPIKE_GRAMMAR"
+          className="tw:border tw:rounded tw:px-2 tw:py-1 tw:flex-1"
+        />
+      </div>
       {error && <p style={{ color: colours.red }}>{error}</p>}
       {result && (
         <>
@@ -88,6 +117,14 @@ globalThis.webViewComponent = function MotifSpikeWebView({
             <b style={{ color: colours.skipped }}>{result.counts.skipped} unreadable</b>. Total{' '}
             {(result.wallTotalMs / 1000).toFixed(2)} s on {result.processes} processes; engine start{' '}
             {(result.coldStartMs / 1000).toFixed(2)} s.
+          </p>
+          <p data-testid="slowest" className="tw:mb-3">
+            Slowest:{' '}
+            {[...result.rows]
+              .sort((a, b) => b.wallMs - a.wallMs)
+              .slice(0, 8)
+              .map((r) => `${r.word} ${r.wallMs} ms (${r.status})`)
+              .join(', ')}
           </p>
           <div className="tw:flex tw:flex-wrap tw:gap-1">
             {result.rows.map((r) => (
