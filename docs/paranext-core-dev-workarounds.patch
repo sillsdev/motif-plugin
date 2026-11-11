@@ -1,0 +1,26 @@
+diff --git a/src/renderer/index.tsx b/src/renderer/index.tsx
+index 2bb4116..9d82daa 100644
+--- a/src/renderer/index.tsx
++++ b/src/renderer/index.tsx
+@@ -91,7 +91,7 @@ async function runPromisesAndThrowIfRejected(...promises: Promise<unknown>[]) {
+ 
+     // This needs to run before the web view service host starts running and blocks us from creating
+     // an iframe for the Usersnap feedback forms
+-    await initializeUsersnapApi();
++    await initializeUsersnapApi().catch((e) => logger.warn(`Usersnap failed: ${e}`));
+ 
+     await runPromisesAndThrowIfRejected(
+       webViewProviderService.initialize(),
+diff --git a/src/shared/data/rpc.model.ts b/src/shared/data/rpc.model.ts
+index dd0f09c..0414cef 100644
+--- a/src/shared/data/rpc.model.ts
++++ b/src/shared/data/rpc.model.ts
+@@ -14,7 +14,7 @@ import { deserialize, serialize, wait } from 'platform-bible-utils';
+ export const WEBSOCKET_PORT = 8876;
+ 
+ /** How many times to try sending a request before giving up if the request is not yet registered */
+-const MAX_REQUEST_ATTEMPTS = 10;
++const MAX_REQUEST_ATTEMPTS = 60;
+ /** How long in ms to wait between request attempts if the request is not yet registered */
+ const REQUEST_ATTEMPT_WAIT_TIME_MS = 1000;
+ 
