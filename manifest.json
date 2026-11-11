@@ -1,0 +1,20 @@
+{
+  "name": "motifSpike",
+  "version": "0.0.1",
+  "publisher": "sillsdev",
+  "displayData": "assets/displayData.json",
+  "author": "SIL Global",
+  "license": "MIT",
+  "main": "src/main.ts",
+  "extensionDependencies": {},
+  "elevatedPrivileges": [
+    "createProcess"
+  ],
+  "types": "src/types/motif-spike.d.ts",
+  "menus": "contributions/menus.json",
+  "settings": "contributions/settings.json",
+  "projectSettings": "contributions/projectSettings.json",
+  "localizedStrings": "contributions/localizedStrings.json",
+  "themes": "contributions/themes.json",
+  "activationEvents": []
+}

@@ -1,0 +1,12 @@
+{
+  "icon": "",
+  "moreInfoUrl": "",
+  "supportUrl": "",
+  "localizedDisplayInfo": {
+    "en": {
+      "displayName": "Motif spike (throwaway)",
+      "shortSummary": "Throwaway spike: colour each word of a chapter by Motif parse time",
+      "description": "assets/descriptions/description-en.md"
+    }
+  }
+}
